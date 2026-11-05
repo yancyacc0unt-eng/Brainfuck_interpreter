@@ -62,9 +62,6 @@ public:
                     newToken->loopStart = current;
                     current->loopEnd = newToken;
                     break;
-                case EOF:
-                    newToken->type = codeType::HALT;
-                    break;
                 default:
                     delete newToken; // Ignore unrecognized characters
                     continue;
@@ -78,6 +75,8 @@ public:
                 current = newToken;
             }
         }
+        Token* haltToken = new Token{tail, codeType::HALT, nullptr, nullptr, nullptr};
+        tail->next = haltToken;
         return head;
     }
 };
