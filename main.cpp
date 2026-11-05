@@ -88,8 +88,8 @@ public:
     Interpreter(Token* tokenList) : tokens(tokenList) {}
     void run() {
         Token* current = tokens;
-        char tape[32768] = {0};
-        short position = 0;
+        char tape[65536] = {0};
+        unsigned short position = 0;
         while (current->type != codeType::HALT) {
             switch (current->type) {
                 case codeType::PLUS:
