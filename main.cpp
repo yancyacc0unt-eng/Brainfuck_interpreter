@@ -125,6 +125,14 @@ public:
             position++; // Wrap around the tape if necessary
         }
     }
+    ~Interpreter() {
+        Token* current = tokens;
+        while (current != nullptr) {
+            Token* next = current->next;
+            delete current;
+            current = next;
+        }
+    }
 };
 
 int main(int argc, char* argv[]) {
