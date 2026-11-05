@@ -30,7 +30,7 @@ public:
         Token* head = nullptr;
         Token* current = nullptr;
         Token* tail = nullptr;
-        for(char c; input.get(c); input.seekg(1, std::ios::cur)) {
+        for(char c; input.get(c);) {
             Token* newToken = new Token{nullptr, codeType::HALT, nullptr, nullptr, nullptr};
             switch(c) {
                 case '+':
