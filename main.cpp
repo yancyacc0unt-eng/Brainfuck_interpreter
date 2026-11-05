@@ -122,7 +122,6 @@ public:
                     break;
             }
             current = current->next;
-            position++; // Wrap around the tape if necessary
         }
     }
     ~Interpreter() {
