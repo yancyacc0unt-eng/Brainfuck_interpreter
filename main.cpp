@@ -62,6 +62,9 @@ public:
                     newToken->loopStart = current;
                     current->loopEnd = newToken;
                     break;
+                case EOF:
+                    newToken->type = codeType::HALT;
+                    break;
                 default:
                     delete newToken; // Ignore unrecognized characters
                     continue;
