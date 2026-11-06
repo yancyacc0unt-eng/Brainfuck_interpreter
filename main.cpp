@@ -2,7 +2,6 @@
 #include <fstream>
 #include <array>
 #include <stack>
-//#include <memory>
 
 enum class codeType {
     PLUS,
@@ -31,7 +30,6 @@ public:
     Parser(std::ifstream& file) : input(file) {}
     Token* tokenize() {
         Token* head = nullptr;
-        Token* current = nullptr;
         Token* tail = nullptr;
 
         std::stack<Token*> loopStack;
@@ -84,7 +82,6 @@ public:
                 tail->next = newToken;
                 newToken->prev = tail;
                 tail = newToken;
-                current = newToken;
             }
         }
         if (!loopStack.empty()) {
