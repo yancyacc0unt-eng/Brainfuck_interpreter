@@ -1,5 +1,8 @@
-#include "iostream"
-#include "fstream"
+#include <iostream>
+#include <fstream>
+#include <array>
+#include <stack>
+//#include <memory>
 
 enum class codeType {
     PLUS,
@@ -30,6 +33,7 @@ public:
         Token* head = nullptr;
         Token* current = nullptr;
         Token* tail = nullptr;
+        
         for(char c; input.get(c);) {
             Token* newToken = new Token{nullptr, codeType::HALT, nullptr, nullptr, nullptr};
             switch(c) {
@@ -77,6 +81,7 @@ public:
         }
         Token* haltToken = new Token{tail, codeType::HALT, nullptr, nullptr, nullptr};
         tail->next = haltToken;
+
         return head;
     }
 };
@@ -88,8 +93,10 @@ public:
     Interpreter(Token* tokenList) : tokens(tokenList) {}
     void run() {
         Token* current = tokens;
-        char tape[65536] = {0};
+        
+        std::array<unsigned char, 65536> tape{};
         unsigned short position = 0;
+
         while (current->type != codeType::HALT) {
             switch (current->type) {
                 case codeType::PLUS:
@@ -141,14 +148,17 @@ int main(int argc, char* argv[]) {
         std::cout << "Usage: " << argv[0] << " <input_file>" << std::endl;
         return -1;
     }
+
     std::ifstream input(argv[1]);
     if (!input.is_open()) {
         std::cerr << "Error: Could not open file " << argv[1] << std::endl;
         return -1;
     }
+
     Parser parser(input);
     Token* tokens = parser.tokenize();
     Interpreter interpreter(tokens);
     interpreter.run();
+
     return 0;
 }
