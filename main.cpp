@@ -33,6 +33,8 @@ public:
         Token* head = nullptr;
         Token* current = nullptr;
         Token* tail = nullptr;
+
+        std::stack<Token*> loopStack;
         
         for(char c; input.get(c);) {
             Token* newToken = new Token{nullptr, codeType::HALT, nullptr, nullptr, nullptr};
@@ -57,14 +59,20 @@ public:
                     break;
                 case '[':
                     newToken->type = codeType::LOOP_START;
+                    loopStack.push(newToken);
                     break;
                 case ']':
                     newToken->type = codeType::LOOP_END;
-                    while (current->type != codeType::LOOP_START) {
-                        current = current->prev;
+                    if (!loopStack.empty()) {
+                        Token* loopStart = loopStack.top();
+                        loopStack.pop();
+                        newToken->loopStart = loopStart;
+                        loopStart->loopEnd = newToken;
+                    }else {
+                        std::cerr << "Error: Unmatched ']' encountered." << std::endl;
+                        delete newToken;
+                        exit(-1);
                     }
-                    newToken->loopStart = current;
-                    current->loopEnd = newToken;
                     break;
                 default:
                     delete newToken; // Ignore unrecognized characters
@@ -79,6 +87,11 @@ public:
                 current = newToken;
             }
         }
+        if (!loopStack.empty()) {
+            std::cerr << "Error: Unmatched '[' encountered." << std::endl;
+            exit(-1);
+        }
+
         Token* haltToken = new Token{tail, codeType::HALT, nullptr, nullptr, nullptr};
         tail->next = haltToken;
 
