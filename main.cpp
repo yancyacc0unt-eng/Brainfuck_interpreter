@@ -61,9 +61,9 @@ public:
                         exit(-1);
                     }
                     break;
-                default:
-                    delete newToken; // Ignore unrecognized characters
-                    continue;
+                case HALT:
+                    delete newToken;
+                    continue; // Skip invalid characters
             }
             if (head == nullptr) {
                 head = tail = newToken;
@@ -97,15 +97,15 @@ public:
         position(0),
         tape{}{
         operations[0] = [&](Token*& t){tape[position]++;};
-        operations[2] = [&](Token*& t){tape[position]--;};
-        operations[3] = [&](Token*& t){position--;};
-        operations[4] = [&](Token*& t){position++;};
-        operations[5] = [&](Token*& t){tape[position] = std::cin.get();};
-        operations[6] = [&](Token*& t){std::cout.put(tape[position]);};
-        operations[7] = [&](Token*& t){if (tape[position] == 0) {
+        operations[1] = [&](Token*& t){tape[position]--;};
+        operations[2] = [&](Token*& t){position--;};
+        operations[3] = [&](Token*& t){position++;};
+        operations[4] = [&](Token*& t){tape[position] = std::cin.get();};
+        operations[5] = [&](Token*& t){std::cout.put(tape[position]);};
+        operations[6] = [&](Token*& t){if (tape[position] == 0) {
                         t = t->loopEnd; // Jump to the matching loop end
                     }};
-        operations[8] = [&](Token*& t){if (tape[position] != 0) {
+        operations[7] = [&](Token*& t){if (tape[position] != 0) {
                         t = t->loopStart; // Jump back to the matching loop start
                     }};
     }
@@ -127,7 +127,7 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
+    if (argc < 1) {
         std::cout << "Usage: " << argv[0] << " <input_file>" << std::endl;
         return -1;
     }
