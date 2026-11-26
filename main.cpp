@@ -32,39 +32,35 @@ class Parser {
 private:
     std::ifstream& input;
     const std::string validChars = "+-<>,.[]";
+    std::stack<Token*> loopStack;
+    std::array<std::function<void(Token*&)>, 3> operations;
 public:
-    Parser(std::ifstream& file) : input(file) {}
+    Parser(std::ifstream& file) : input(file), loopStack{} {
+        operations[0] = [&](Token*& t) { loopStack.push(t); };
+        operations[1] = [&](Token*& t) {
+            if (!loopStack.empty()) {
+                        Token* loopStart = loopStack.top();
+                        loopStack.pop();
+                        t->loopStart = loopStart;
+                        loopStart->loopEnd = t;
+            } else {
+                std::cerr << "Error: Unmatched ']' encountered." << std::endl;
+                delete t;
+                exit(-1);
+            }
+        };
+        operations[2] = [&](Token*& t) { delete t; }; // Skip invalid characters
+    }
     Token* tokenize() {
         Token* head = nullptr;
         Token* tail = nullptr;
-
-        std::stack<Token*> loopStack;
         
         for(char c; input.get(c);) {
             Token* newToken = new Token{nullptr,
                 getIndex(c, validChars),
                 nullptr, nullptr, nullptr
             };
-            switch(newToken->type) {
-                case LOOP_START:
-                    loopStack.push(newToken);
-                    break;
-                case LOOP_END:
-                    if (!loopStack.empty()) {
-                        Token* loopStart = loopStack.top();
-                        loopStack.pop();
-                        newToken->loopStart = loopStart;
-                        loopStart->loopEnd = newToken;
-                    }else {
-                        std::cerr << "Error: Unmatched ']' encountered." << std::endl;
-                        delete newToken;
-                        exit(-1);
-                    }
-                    break;
-                case HALT:
-                    delete newToken;
-                    continue; // Skip invalid characters
-            }
+            operations[newToken->type](newToken);
             if (head == nullptr) {
                 head = tail = newToken;
             } else {
@@ -88,30 +84,29 @@ public:
 class Interpreter {
 private:
     Token* tokens;
-    std::array<std::function<void(Token*&)>, 8> operations;
     std::array<unsigned char, 65536> tape;
     unsigned short position;
+    std::array<std::function<void(Token*&)>, 8> operations;
 public:
-    Interpreter(Token* tokenList) :
-        tokens(tokenList),
-        position(0),
-        tape{}{
-        operations[0] = [&](Token*& t){tape[position]++;};
-        operations[1] = [&](Token*& t){tape[position]--;};
-        operations[2] = [&](Token*& t){position--;};
-        operations[3] = [&](Token*& t){position++;};
-        operations[4] = [&](Token*& t){tape[position] = std::cin.get();};
-        operations[5] = [&](Token*& t){std::cout.put(tape[position]);};
-        operations[6] = [&](Token*& t){if (tape[position] == 0) {
-                        t = t->loopEnd; // Jump to the matching loop end
-                    }};
-        operations[7] = [&](Token*& t){if (tape[position] != 0) {
-                        t = t->loopStart; // Jump back to the matching loop start
-                    }};
+    Interpreter(Token* tokenList) : tokens(tokenList), position(0), tape{} {
+        operations[0] = [&](Token*& t) { tape[position]++; };
+        operations[1] = [&](Token*& t) { tape[position]--; };
+        operations[2] = [&](Token*& t) { position--; };
+        operations[3] = [&](Token*& t) { position++; };
+        operations[4] = [&](Token*& t) { tape[position] = std::cin.get(); };
+        operations[5] = [&](Token*& t) { std::cout.put(tape[position]); };
+        operations[6] = [&](Token*& t) {
+            if (tape[position] == 0) {
+                t = t->loopEnd;
+            }}; // Jump to the matching loop end
+        operations[7] = [&](Token*& t) {
+            if (tape[position] != 0) {
+                t = t->loopStart;
+            }}; // Jump back to the matching loop start
     }
     void run() {
         Token* current = tokens;
-        while (current->type != HALT) {
+        while (current->type < HALT) {
             operations[current->type](current);
             current = current->next;
         }
