@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::ifstream input(argv[1]);
+    std::ifstream input(".\\test.bf");
     if (!input.is_open()) {
         std::cerr << "Error: Could not open file " << argv[1] << std::endl;
         return -1;
