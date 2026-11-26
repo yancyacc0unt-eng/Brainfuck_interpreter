@@ -31,7 +31,7 @@ int getIndex(char c, const std::string& str) {
 class Parser {
 private:
     std::ifstream& input;
-    const std::string validChars = "+-<>.,[]";
+    const std::string validChars = "+-<>,.[]";
 public:
     Parser(std::ifstream& file) : input(file) {}
     Token* tokenize() {
