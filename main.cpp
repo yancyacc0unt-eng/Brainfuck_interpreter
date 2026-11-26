@@ -2,32 +2,36 @@
 #include <fstream>
 #include <array>
 #include <stack>
+#include <string>
+#include <functional>
 
-// I will add more comments later.
-
-enum class codeType {
-    PLUS,
-    MINUS,
-    LEFT,
-    RIGHT,
-    INPUT,
-    OUTPUT,
-    LOOP_START,
-    LOOP_END,
-    HALT
-};
+#define PLUS 0
+#define MINUS 1
+#define LEFT 2
+#define RIGHT 3
+#define INPUT 4
+#define OUTPUT 5
+#define LOOP_START 6
+#define LOOP_END 7
+#define HALT 8
 
 struct Token {
     Token* prev;
-    codeType type;
+    int type;
     Token* loopStart;
     Token* loopEnd;
     Token* next;
 };
 
+int getIndex(char c, const std::string& str) {
+    std::string::size_type index = str.find(c);
+    return index == std::string::npos ? HALT : static_cast<int>(index);
+}
+
 class Parser {
 private:
     std::ifstream& input;
+    const std::string validChars = "+-<>.,[]";
 public:
     Parser(std::ifstream& file) : input(file) {}
     Token* tokenize() {
@@ -37,32 +41,15 @@ public:
         std::stack<Token*> loopStack;
         
         for(char c; input.get(c);) {
-            Token* newToken = new Token{nullptr, codeType::HALT, nullptr, nullptr, nullptr};
-            switch(c) {
-                case '+':
-                    newToken->type = codeType::PLUS;
-                    break;
-                case '-':
-                    newToken->type = codeType::MINUS;
-                    break;
-                case '<':
-                    newToken->type = codeType::LEFT;
-                    break;
-                case '>':
-                    newToken->type = codeType::RIGHT;
-                    break;
-                case ',':
-                    newToken->type = codeType::INPUT;
-                    break;
-                case '.':
-                    newToken->type = codeType::OUTPUT;
-                    break;
-                case '[':
-                    newToken->type = codeType::LOOP_START;
+            Token* newToken = new Token{nullptr,
+                getIndex(c, validChars),
+                nullptr, nullptr, nullptr
+            };
+            switch(newToken->type) {
+                case LOOP_START:
                     loopStack.push(newToken);
                     break;
-                case ']':
-                    newToken->type = codeType::LOOP_END;
+                case LOOP_END:
                     if (!loopStack.empty()) {
                         Token* loopStart = loopStack.top();
                         loopStack.pop();
@@ -91,7 +78,7 @@ public:
             exit(-1);
         }
 
-        Token* haltToken = new Token{tail, codeType::HALT, nullptr, nullptr, nullptr};
+        Token* haltToken = new Token{tail, HALT, nullptr, nullptr, nullptr};
         tail->next = haltToken;
 
         return head;
@@ -101,47 +88,31 @@ public:
 class Interpreter {
 private:
     Token* tokens;
+    std::array<std::function<void(Token*&)>, 8> operations;
+    std::array<unsigned char, 65536> tape;
+    unsigned short position;
 public:
-    Interpreter(Token* tokenList) : tokens(tokenList) {}
+    Interpreter(Token* tokenList) :
+        tokens(tokenList),
+        position(0),
+        tape{}{
+        operations[0] = [&](Token*& t){tape[position]++;};
+        operations[2] = [&](Token*& t){tape[position]--;};
+        operations[3] = [&](Token*& t){position--;};
+        operations[4] = [&](Token*& t){position++;};
+        operations[5] = [&](Token*& t){tape[position] = std::cin.get();};
+        operations[6] = [&](Token*& t){std::cout.put(tape[position]);};
+        operations[7] = [&](Token*& t){if (tape[position] == 0) {
+                        t = t->loopEnd; // Jump to the matching loop end
+                    }};
+        operations[8] = [&](Token*& t){if (tape[position] != 0) {
+                        t = t->loopStart; // Jump back to the matching loop start
+                    }};
+    }
     void run() {
         Token* current = tokens;
-        
-        std::array<unsigned char, 65536> tape{};
-        unsigned short position = 0;
-
-        while (current->type != codeType::HALT) {
-            switch (current->type) {
-                case codeType::PLUS:
-                    tape[position]++;
-                    break;
-                case codeType::MINUS:
-                    tape[position]--;
-                    break;
-                case codeType::LEFT:
-                    position--;
-                    break;
-                case codeType::RIGHT:
-                    position++;
-                    break;
-                case codeType::INPUT:
-                    tape[position] = std::cin.get();
-                    break;
-                case codeType::OUTPUT:
-                    std::cout.put(tape[position]);
-                    break;
-                case codeType::LOOP_START:
-                    if (tape[position] == 0) {
-                        current = current->loopEnd; // Jump to the matching loop end
-                    }
-                    break;
-                case codeType::LOOP_END:
-                    if (tape[position] != 0) {
-                        current = current->loopStart; // Jump back to the matching loop start
-                    }
-                    break;
-                default:
-                    break;
-            }
+        while (current->type != HALT) {
+            operations[current->type](current);
             current = current->next;
         }
     }
