@@ -60,7 +60,7 @@ public:
                 getIndex(c, validChars),
                 nullptr, nullptr, nullptr
             };
-            operations[newToken->type](newToken);
+            operations[newToken->type - 6](newToken);
             if (head == nullptr) {
                 head = tail = newToken;
             } else {
