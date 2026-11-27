@@ -122,12 +122,12 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-    if (argc < 1) {
+    if (argc < 2) {
         std::cout << "Usage: " << argv[0] << " <input_file>" << std::endl;
         return -1;
     }
 
-    std::ifstream input(".\\test.bf");
+    std::ifstream input(argv[1]);
     if (!input.is_open()) {
         std::cerr << "Error: Could not open file " << argv[1] << std::endl;
         return -1;
