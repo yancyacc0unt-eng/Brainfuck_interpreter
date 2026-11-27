@@ -1,10 +1,10 @@
 # Brainfuck Interpreter
 
-A simple Brainfuck interpreter written in C++.
+A completed, lightweight Brainfuck interpreter written in C++.
 
 ## Overview
 
-This project reads a Brainfuck source file, converts the instructions into tokens, and executes them with a tape-based virtual machine. It supports the standard Brainfuck commands:
+The interpreter reads a Brainfuck source file, converts its instructions into tokens, and executes them on a tape-based virtual machine. It supports all eight standard Brainfuck commands:
 
 - `+` increments the current cell
 - `-` decrements the current cell
@@ -12,23 +12,23 @@ This project reads a Brainfuck source file, converts the instructions into token
 - `<` moves the pointer left
 - `.` outputs the current cell as a character
 - `,` reads one input character into the current cell
-- `[` jumps forward to the matching `]` if the current cell is zero
-- `]` jumps back to the matching `[` if the current cell is not zero
+- `[` jumps forward to the matching `]` when the current cell is zero
+- `]` jumps back to the matching `[` when the current cell is not zero
 
 ## Project Files
 
-- `main.cpp` contains the parser and interpreter implementation
-- `test.bf` contains a sample Brainfuck program
+- `main.cpp` contains the parser, interpreter, and command-line entry point
+- `test.bf` is a sample program that prints a "Hello World!"-style message
 
 ## Build
 
-From the project directory, compile on Linux or macOS with:
+Compile from the project directory with a C++ compiler:
 
 ```bash
 g++ main.cpp -o brainfuck
 ```
 
-On Windows, MinGW or MSYS2 can use the same command. If you want an `.exe` filename, run:
+On Windows with MinGW or MSYS2:
 
 ```powershell
 g++ main.cpp -o brainfuck.exe
@@ -36,19 +36,19 @@ g++ main.cpp -o brainfuck.exe
 
 ## Run
 
-On Linux or macOS:
+Pass the path to a Brainfuck source file as the first argument. For example, on Linux or macOS:
 
 ```bash
-./brainfuck
+./brainfuck test.bf
 ```
 
 On Windows:
 
 ```powershell
-.\brainfuck.exe
+.\brainfuck.exe .\test.bf
 ```
 
-The program currently opens `test.bf` in the project directory. Command-line file paths are not yet used.
+The source file can be any Brainfuck program; replace `test.bf` with its path.
 
 ## Example
 
@@ -60,16 +60,15 @@ The included `test.bf` file prints a classic "Hello World!"-style message:
 
 ## Implementation
 
-- The parser stores instructions in a linked list of `Token` structures.
-- Each token keeps references to the matching opening or closing loop token.
+- The parser stores instructions in a linked list of tokens.
+- Matching loop tokens hold references to each other for efficient jumps.
 - The interpreter uses a fixed-size array of 65,536 bytes as its tape.
-- Instruction execution is dispatched through an array of functions instead of a large switch statement.
-- Unmatched loop brackets are reported as errors.
-- Characters that are not Brainfuck instructions are ignored.
+- Function arrays dispatch parsing and execution operations without a large switch statement.
+- Unmatched loop brackets and file-open failures are reported as errors.
 
 ## Notes
 
-- The tape pointer starts at position zero.
+- The tape pointer starts at position zero and uses an unsigned 16-bit index.
 - Cell values use 8-bit unsigned integers.
 - Input is read from standard input (`std::cin`).
 - Output is written to standard output (`std::cout`).
